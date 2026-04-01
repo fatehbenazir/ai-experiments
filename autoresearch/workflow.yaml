@@ -10,7 +10,7 @@ main:
           - project_number: ${sys.get_env("GOOGLE_CLOUD_PROJECT_NUMBER")}
           - region: "us-east4"
           - job_name: "autoresearch-job"
-          - image_url: ${"us-central1-docker.pkg.dev/" + project_id + "/autoresearch-repo/autoresearch:latest"}
+          - image_url: ${"us-central1-docker.pkg.dev/" + project_id + "/autoresearch-repo/autoresearch:gemma3"}
           - bucket_name: ${sys.get_env("CLOUD_STORAGE_BUCKET")}
 
           # Optional: study_name is used to isolate results. If blank, it defaults to 'default' in env.sh
