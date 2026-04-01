@@ -1,0 +1,17 @@
+.git
+.gitignore
+.gcloudignore
+.dockerignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.python-version
+results/
+worktrees/
+results.tsv
+*.ipynb
+progress.png
+workflow.yaml
+README.md
