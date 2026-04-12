@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: activities
+    // Fields:
+    //   - id: string (required)
+    //   - name: string (required, 1-100 chars)
+    //   - location: string (optional, 0-100 chars)
+    //   - vibe: string (required, enum)
+    //   - type: string (required, 'must-do' | 'nice-to-do')
+    //   - dateId: string (optional)
+    //   - imageUrl: string (optional)
+    //   - createdBy: string (required, auth.uid)
+    //
+    // Collection: reminders
+    // Fields:
+    //   - id: string (required)
+    //   - text: string (required, 1-200 chars)
+    //   - completed: bool (required)
+    //   - category: string (required, enum)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidActivity(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.vibe is string &&
+             data.type in ['must-do', 'nice-to-do'] &&
+             (!('location' in data) || (data.location is string && data.location.size() <= 100)) &&
+             (!('dateId' in data) || data.dateId == null || (data.dateId is string && data.dateId.size() <= 20)) &&
+             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 500));
+    }
+
+    function isValidReminder(data) {
+      return data.text is string && data.text.size() > 0 && data.text.size() <= 200 &&
+             data.completed is bool &&
+             data.category in ['packing', 'check', 'other'];
+    }
+
+    match /activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidActivity(request.resource.data) && 
+                      request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAuthenticated() && isValidActivity(request.resource.data) &&
+                      request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isAuthenticated(); // Group collaboration allows any member to cleanup
+    }
+
+    match /reminders/{reminderId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidReminder(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+  }
+}

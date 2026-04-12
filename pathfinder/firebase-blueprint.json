@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Activity": {
+      "title": "Activity",
+      "description": "A planned or unassigned travel activity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "vibe": { "type": "string" },
+        "type": { "type": "string", "enum": ["must-do", "nice-to-do"] },
+        "date": { "type": "string" },
+        "dateId": { "type": "string" },
+        "time": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["id", "name", "vibe", "type"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "A checklist item for packing or pre-trip checks",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "category": { "type": "string", "enum": ["packing", "check", "other"] }
+      },
+      "required": ["id", "text", "completed", "category"]
+    }
+  },
+  "firestore": {
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Global list of activities for the travel group"
+    },
+    "/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Shared checklist for the travel group"
+    }
+  }
+}
