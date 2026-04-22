@@ -63,14 +63,23 @@ async function startServer() {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
-        systemInstruction: "You are a helpful, travel-curator style assistant for the PathFinder app. Provide concise, editorial, and inspiring responses about travel, hidden gems, and adventures. Use a warm and sophisticated tone."
+        systemInstruction: "You are a helpful, travel-curator style assistant for the Pathfinder app. Provide concise, editorial, and inspiring responses about travel, hidden gems, and adventures. Use a warm and sophisticated tone."
       });
 
+      let mappedHistory = history.map((msg: any) => ({
+        role: msg.role === 'model' ? 'model' : 'user',
+        parts: msg.parts
+      }));
+
+      // Gemini API requires the first message in history to be from 'user'.
+      // If the history starts with a 'model' message (e.g. the initial greeting),
+      // remove it to satisfy the API.
+      if (mappedHistory.length > 0 && mappedHistory[0].role === 'model') {
+        mappedHistory.shift();
+      }
+
       const chat = model.startChat({
-        history: history.map((msg: any) => ({
-          role: msg.role === 'model' ? 'model' : 'user',
-          parts: msg.parts
-        }))
+        history: mappedHistory
       });
 
       const result = await chat.sendMessage(prompt);

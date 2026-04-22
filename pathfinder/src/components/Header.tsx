@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, userPhoto }) => {
         <button onClick={onMenuClick} className="text-primary hover:opacity-80 transition-opacity">
           <Menu className="w-6 h-6" />
         </button>
-        <h1 className="text-2xl font-headline italic text-primary font-bold tracking-tight">PathFinder</h1>
+        <h1 className="text-2xl font-headline italic text-primary font-bold tracking-tight">Pathfinder</h1>
       </div>
       <div className="flex items-center gap-3">
         <button 

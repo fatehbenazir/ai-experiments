@@ -1,6 +1,6 @@
 {
-  "name": "PathFinder Summer Itinerary",
-  "short_name": "PathFinder",
+  "name": "Pathfinder Summer Itinerary",
+  "short_name": "Pathfinder",
   "description": "Collaborative summer trip planning.",
   "start_url": "/",
   "display": "standalone",

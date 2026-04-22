@@ -12,6 +12,7 @@
         "type": { "type": "string", "enum": ["must-do", "nice-to-do"] },
         "date": { "type": "string" },
         "dateId": { "type": "string" },
+        "endDateId": { "type": "string" },
         "time": { "type": "string" },
         "imageUrl": { "type": "string" },
         "createdBy": { "type": "string" }

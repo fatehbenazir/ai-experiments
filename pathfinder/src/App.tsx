@@ -159,13 +159,29 @@ export default function App() {
   const itineraryDates = useMemo(() => {
     const dates = [];
     // May 27-31
-    for (let d = 27; d <= 31; d++) dates.push({ id: `May ${d}`, day: d, month: 'May' });
+    for (let d = 27; d <= 31; d++) dates.push({ id: `May ${d}`, day: d, month: 'May', dateObj: new Date(2026, 4, d) });
     // June 1-30
-    for (let d = 1; d <= 30; d++) dates.push({ id: `June ${d}`, day: d, month: 'June' });
+    for (let d = 1; d <= 30; d++) dates.push({ id: `June ${d}`, day: d, month: 'June', dateObj: new Date(2026, 5, d) });
     // July 1-7
-    for (let d = 1; d <= 7; d++) dates.push({ id: `July ${d}`, day: d, month: 'July' });
-    return dates;
+    for (let d = 1; d <= 7; d++) dates.push({ id: `July ${d}`, day: d, month: 'July', dateObj: new Date(2026, 6, d) });
+    return dates.map((d, i) => ({ ...d, index: i }));
   }, []);
+
+  const isDateInRange = (dateId: string, startId?: string, endId?: string) => {
+    if (!startId) return false;
+    if (!endId || startId === endId) return dateId === startId;
+    
+    const startIndex = itineraryDates.find(d => d.id === startId)?.index ?? -1;
+    const endIndex = itineraryDates.find(d => d.id === endId)?.index ?? -1;
+    const currentIndex = itineraryDates.find(d => d.id === dateId)?.index ?? -1;
+    
+    if (startIndex === -1 || endIndex === -1 || currentIndex === -1) return false;
+    
+    const min = Math.min(startIndex, endIndex);
+    const max = Math.max(startIndex, endIndex);
+    
+    return currentIndex >= min && currentIndex <= max;
+  };
 
   // Fun Facts Calculations
   const stats = {
@@ -196,14 +212,14 @@ export default function App() {
   const [preferOffline, setPreferOffline] = useState(() => localStorage.getItem('prefer_offline') === 'true');
   const [gemmaStatus, setGemmaStatus] = useState<GemmaStatus>('not_downloaded');
   const [gemmaError, setGemmaError] = useState<string | null>(null);
-  const [gemmaSize, setGemmaSize] = useState<'2b' | '9b'>(() => (localStorage.getItem('gemma_current_size') as '2b' | '9b') || '2b');
+  const [gemmaSize, setGemmaSize] = useState<'2b' | '4b'>(() => (localStorage.getItem('gemma_current_size') as '2b' | '4b') || '2b');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkGemma = async () => {
-      const downloaded = await aiService.isGemmaDownloaded(gemmaSize);
+      const downloaded = await aiService.isGemmaDownloaded();
       if (downloaded) setGemmaStatus('downloaded');
       else setGemmaStatus('not_downloaded');
     };
@@ -214,7 +230,7 @@ export default function App() {
     setGemmaStatus('downloading');
     setGemmaError(null);
     try {
-      await aiService.downloadGemma(gemmaSize, (progress) => {
+      await aiService.downloadGemma((progress) => {
         setDownloadProgress(progress);
       });
       setGemmaStatus('downloaded');
@@ -302,7 +318,8 @@ export default function App() {
       location: formData.get('location') as string,
       vibe: selectedVibe,
       type: activeTab === 'must-do' ? 'must-do' : 'nice-to-do',
-      dateId: activeTab === 'home' ? (selectedDateId || null) : (editingActivity?.dateId || null),
+      dateId: (formData.get('dateId') as string) || (activeTab === 'home' ? (selectedDateId || null) : (editingActivity?.dateId || null)),
+      endDateId: formData.get('endDateId') as string || null,
       imageUrl: editingActivity?.imageUrl || 'https://images.unsplash.com/photo-1533628635777-112b2239b1c7?auto=format&fit=crop&q=80&w=400',
       createdBy: user.uid
     };
@@ -422,7 +439,7 @@ export default function App() {
         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-8 mx-auto">
           <Sparkles className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="serif-text text-4xl font-bold mb-2">PathFinder</h1>
+        <h1 className="serif-text text-4xl font-bold mb-2">Pathfinder</h1>
         <p className="text-secondary mb-10 font-medium opacity-70">Enter the 4-letter secret to begin your journey.</p>
         
         <form onSubmit={handlePasscodeSubmit} className="space-y-6">
@@ -574,7 +591,7 @@ export default function App() {
           >
             <span className="font-label text-white/80 text-xs uppercase tracking-[0.3em] font-bold mb-2 block">The Grand Adventure</span>
             <h1 className="serif-text text-5xl md:text-7xl text-white font-bold leading-[0.9] tracking-tighter">
-              PathFinder
+              Pathfinder
             </h1>
           </motion.div>
         </div>
@@ -586,10 +603,17 @@ export default function App() {
           <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">May 27 - July 7</span>
         </div>
         <div className="grid grid-cols-7 gap-y-4 gap-x-2">
-          {itineraryDates.map((date, i) => {
-            const hasActivity = activities.some(a => a.dateId === date.id);
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-[10px] font-bold text-center text-outline-variant uppercase tracking-widest pb-2">
+              {day}
+            </div>
+          ))}
+          {/* Padding for May 27 (Wednesday) */}
+          {[...Array(3)].map((_, i) => <div key={`pad-${i}`} />)}
+          {itineraryDates.map((date) => {
+            const hasActivity = activities.some(a => isDateInRange(date.id, a.dateId, a.endDateId));
             const isSelected = selectedDateId === date.id;
-            const isWeekend = (i + 1) % 7 === 6 || (i + 1) % 7 === 0;
+            const isWeekend = date.dateObj.getDay() === 0 || date.dateObj.getDay() === 6;
             
             return (
               <button 
@@ -933,6 +957,34 @@ export default function App() {
               />
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block font-label text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Start Date</label>
+              <select 
+                name="dateId"
+                defaultValue={editingActivity?.dateId || selectedDateId || ""}
+                className="w-full bg-surface-container-highest border-none border-b-2 border-outline/20 focus:border-primary focus:ring-0 px-0 py-4 text-lg font-body transition-all"
+              >
+                <option value="">Unscheduled</option>
+                {itineraryDates.map(d => (
+                  <option key={d.id} value={d.id}>{d.id}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block font-label text-xs uppercase tracking-widest text-on-surface-variant font-semibold">End Date (Optional)</label>
+              <select 
+                name="endDateId"
+                defaultValue={editingActivity?.endDateId || ""}
+                className="w-full bg-surface-container-highest border-none border-b-2 border-outline/20 focus:border-primary focus:ring-0 px-0 py-4 text-lg font-body transition-all"
+              >
+                <option value="">Same Day</option>
+                {itineraryDates.map(d => (
+                  <option key={d.id} value={d.id}>{d.id}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="space-y-4">
             <label className="block font-label text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Select the Vibe</label>
             <div className="flex flex-wrap gap-3">
@@ -993,7 +1045,7 @@ export default function App() {
             {msg.role === 'model' && (
               <div className="flex items-center gap-2 mb-2 px-1">
                 <Sparkles className="text-secondary w-3 h-3" />
-                <span className="font-label text-[10px] font-bold uppercase tracking-wider text-secondary">PathFinder AI</span>
+                <span className="font-label text-[10px] font-bold uppercase tracking-wider text-secondary">Pathfinder AI</span>
                 {msg.modelUsed && (
                   <span className={cn(
                     "text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1",
@@ -1031,7 +1083,7 @@ export default function App() {
         {isTyping && (
           <div className="flex items-center gap-2 text-secondary animate-pulse">
             <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">PathFinder AI is thinking...</span>
+            <span className="text-xs font-bold uppercase tracking-widest">Pathfinder AI is thinking...</span>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -1120,12 +1172,12 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <Cpu className="text-primary w-6 h-6" />
                       <div>
-                        <h4 className="font-bold text-on-surface">Gemma 2</h4>
+                        <h4 className="font-bold text-on-surface">Gemma 4</h4>
                         <p className="text-[10px] uppercase tracking-widest font-bold text-secondary opacity-60">On-Device Intelligence</p>
                       </div>
                     </div>
                     <div className="flex bg-surface-container-low p-1 rounded-lg">
-                      {(['2b', '9b'] as const).map((size) => (
+                      {(['2b', '4b'] as const).map((size) => (
                         <button
                           key={size}
                           onClick={() => setGemmaSize(size)}
@@ -1143,8 +1195,14 @@ export default function App() {
                   </div>
                   
                   <p className="text-xs leading-relaxed text-secondary">
-                    Download the latest Gemma 2 model to chat even when you're deep in the desert. The 9B model is smarter but requires more space and RAM.
+                    Download the latest Gemma 4 model to chat even when you're deep in the desert. The 4b model is smarter but requires more space and RAM.
                   </p>
+
+                  <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
+                    <p className="text-[10px] leading-relaxed text-primary font-medium">
+                      <strong>Tip:</strong> On iPhone, use "Add to Home Screen" to ensure the model isn't deleted by the system to save space.
+                    </p>
+                  </div>
 
                   {gemmaStatus === 'not_downloaded' && (
                     <button 
@@ -1309,7 +1367,7 @@ export default function App() {
   if (!isAuthReady) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="animate-pulse text-primary font-bold">Loading PathFinder...</div>
+        <div className="animate-pulse text-primary font-bold">Loading Pathfinder...</div>
       </div>
     );
   }
@@ -1321,7 +1379,7 @@ export default function App() {
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
             <Sparkles className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="serif-text text-4xl font-bold mb-4">PathFinder</h1>
+          <h1 className="serif-text text-4xl font-bold mb-4">Pathfinder</h1>
           <p className="text-secondary mb-8 max-w-xs">
             Join your group to start planning your sun-drenched memories together.
           </p>

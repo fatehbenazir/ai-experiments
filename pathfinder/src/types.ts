@@ -9,6 +9,7 @@ export interface Activity {
   date?: string;
   dateNumber?: number;
   dateId?: string; // Unique ID for the date (e.g., "May 27")
+  endDateId?: string; // End date ID for multi-day activities
   time?: string;
   imageUrl?: string;
   createdBy?: string;
