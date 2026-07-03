@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Google DeepMind",
+    "url": "https://deepmind.google/blog/rss.xml",
+    "type": "rss"
+  },
+  {
+    "name": "Google Cloud AI",
+    "url": "https://cloud.google.com/blog/products/ai-machine-learning/",
+    "type": "html"
+  },
+  {
+    "name": "Google AI (The Keyword)",
+    "url": "https://blog.google/technology/ai/rss/",
+    "type": "rss"
+  },
+  {
+    "name": "Anthropic News",
+    "url": "https://www.anthropic.com/news",
+    "type": "html"
+  },
+  {
+    "name": "OpenAI News",
+    "url": "https://openai.com/news",
+    "type": "html"
+  },
+  {
+    "name": "NVIDIA Blog",
+    "url": "https://blogs.nvidia.com/feed/",
+    "type": "rss"
+  },
+  {
+    "name": "Cursor Blog",
+    "url": "https://cursor.com/blog",
+    "type": "html"
+  },
+  {
+    "name": "SpaceX Updates",
+    "url": "https://www.spacex.com/updates/",
+    "type": "html"
+  },
+  {
+    "name": "Sequoia Capital",
+    "url": "https://www.sequoiacap.com/feed/",
+    "type": "rss"
+  },
+  {
+    "name": "Bain & Company Insights",
+    "url": "https://www.bain.com/insights/",
+    "type": "html"
+  },
+  {
+    "name": "McKinsey Insights",
+    "url": "https://www.mckinsey.com/insights/rss",
+    "type": "rss"
+  },
+  {
+    "name": "SemiAnalysis",
+    "url": "https://semianalysis.com/feed/",
+    "type": "rss"
+  },
+  {
+    "name": "Andreessen Horowitz (a16z AI)",
+    "url": "https://a16z.com/ai/",
+    "type": "html"
+  },
+  {
+    "name": "Stanford HAI",
+    "url": "https://hai.stanford.edu/news",
+    "type": "html"
+  },
+  {
+    "name": "Addy Osmani's Blog",
+    "url": "https://addyosmani.com/rss.xml",
+    "type": "rss"
+  }
+]
