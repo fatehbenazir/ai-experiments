@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+scrapes/
+daily_brief_*.md
+*.log
+.env
