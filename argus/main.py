@@ -96,6 +96,65 @@ def send_chat_brief(brief_path: Path):
     except Exception as e:
         print(f"[Chat] Failed to dispatch brief to Google Chat: {e}")
 
+def save_to_gcs(brief_path: Path, today_str: str):
+    """Uploads the markdown brief and a rendered HTML dashboard to Google Cloud Storage."""
+    bucket_name = os.environ.get("GCS_BUCKET_NAME", f"{os.environ.get('GOOGLE_CLOUD_PROJECT', 'your-gcp-project-id')}-argus-briefs")
+    try:
+        from google.cloud import storage
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+
+        # Upload markdown backup
+        md_blob = bucket.blob(f"archive/daily_brief_{today_str}.md")
+        md_blob.upload_from_filename(str(brief_path))
+
+        # Convert Markdown to clean HTML dashboard
+        with open(brief_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        import re
+        html = content
+        html = re.sub(r"^# (.*?)$", r"<h1>\1</h1>", html, flags=re.MULTILINE)
+        html = re.sub(r"^## (.*?)$", r"<h2>\1</h2>", html, flags=re.MULTILINE)
+        html = re.sub(r"^### (.*?)$", r"<h3>\1</h3>", html, flags=re.MULTILINE)
+        html = re.sub(r"^\*\s+\*\*\[(.*?)\]\((.*?)\)\*\*(.*?)$", r'<li><strong><a href="\2" target="_blank">\1</a></strong>\3</li>', html, flags=re.MULTILINE)
+        html = re.sub(r"^\*\s+(.*?)$", r"<li>\1</li>", html, flags=re.MULTILINE)
+        
+        dashboard_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>Argus Intelligence Dashboard ({today_str})</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #1f2937; background: #fdfdfd; }}
+        h1 {{ border-bottom: 2px solid #2563eb; padding-bottom: 10px; color: #111827; }}
+        h2 {{ margin-top: 30px; color: #1e3a8a; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }}
+        a {{ color: #2563eb; text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+        li {{ margin-bottom: 8px; }}
+        .footer {{ margin-top: 50px; font-size: 0.85em; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 15px; }}
+    </style>
+</head>
+<body>
+    {html}
+    <div class="footer">
+        <strong>Argus Autonomous Intelligence Platform (ADK V1)</strong><br>
+        Generated serverless on Google Cloud Run &bull; Fact-Checked by QA Judge Evaluator &bull; {datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")}
+    </div>
+</body>
+</html>"""
+
+        # Upload latest.html (the permanent web bookmark!)
+        latest_blob = bucket.blob("latest.html")
+        latest_blob.upload_from_string(dashboard_html, content_type="text/html; charset=utf-8")
+
+        # Upload daily archive copy
+        archive_html_blob = bucket.blob(f"archive/{today_str}.html")
+        archive_html_blob.upload_from_string(dashboard_html, content_type="text/html; charset=utf-8")
+
+        print(f"[GCS] Successfully uploaded intelligence dashboard to gs://{bucket_name}/latest.html")
+    except Exception as e:
+        print(f"[GCS] Failed to upload brief to Google Cloud Storage: {e}")
+
 def main(force: bool = False):
     print(f"=== Starting Argus Intelligence Scan (ADK V1) | Force Fresh: {force} ===")
     base_dir = Path(__file__).parent
@@ -186,6 +245,7 @@ def main(force: bool = False):
             f.write(full_brief)
         print(f"\n=== Argus Daily Brief successfully generated: {brief_filename} ===")
         send_chat_brief(brief_filename)
+        save_to_gcs(brief_filename, today_str)
         return {"status": "success", "brief_path": str(brief_filename), "sections_count": len(daily_brief_sections)}
     else:
         print("\n=== No new sections generated for today's brief. ===")
