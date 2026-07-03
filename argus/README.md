@@ -1,5 +1,7 @@
 # Argus: Autonomous AI Intelligence Tracker (ADK V1)
 
+> **Enterprise Serverless Architecture**: Built on Google GenAI SDK, Google Agent Development Kit (ADK), and Google Cloud Run.
+
 An autonomous, serverless AI intelligence gathering system built on the Google GenAI SDK and Google's Agent Development Kit (ADK) architecture. Argus monitors 15 industry-leading AI research, product, and thought leadership feeds, synthesizes high-density briefs, enforces zero-hallucination quality control via a self-healing dual-agent loop, and dispatches updates to Google Chat.
 
 ---
