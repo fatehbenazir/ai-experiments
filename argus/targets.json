@@ -30,11 +30,6 @@
     "type": "rss"
   },
   {
-    "name": "Cursor Blog",
-    "url": "https://cursor.com/blog",
-    "type": "html"
-  },
-  {
     "name": "SpaceX Updates",
     "url": "https://www.spacex.com/updates/",
     "type": "html"

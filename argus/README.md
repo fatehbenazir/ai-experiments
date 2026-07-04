@@ -2,7 +2,7 @@
 
 > **Enterprise Serverless Architecture**: Built on Google GenAI SDK, Google Agent Development Kit (ADK), and Google Cloud Run.
 
-An autonomous, serverless AI intelligence gathering system built on the Google GenAI SDK and Google's Agent Development Kit (ADK) architecture. Argus monitors 15 industry-leading AI research, product, and thought leadership feeds, synthesizes high-density briefs, enforces zero-hallucination quality control via a self-healing dual-agent loop, and dispatches updates to Google Chat.
+An autonomous, serverless AI intelligence gathering system built on the Google GenAI SDK and Google's Agent Development Kit (ADK) architecture. Argus monitors 14 industry-leading AI research, product, and thought leadership feeds, synthesizes high-density briefs, enforces zero-hallucination quality control via a self-healing dual-agent loop, and dispatches updates to Google Chat.
 
 ---
 
@@ -15,13 +15,15 @@ The tracker implements a supervisor-evaluator design pattern using two specializ
                                                                         |
 [Google Chat Webhook] <--- [Daily Artifact] <--- (Pass) <--- [Judge Evaluator QA] <---+
                                                                         |             |
-                                                                   (Fail / Reject)    |
-                                                                        +-------------+
+                                                                     (Fail)           |
+                                                                        |             |
+                                                                        v             |
+                                                             [Refine & Re-Scrape] ----+
 ```
 
 ### Core Components
-* **Generator Agent (`agent.py`)**: Ingests raw scraped XML/HTML payloads and synthesizes concise, authoritative summaries (<150 words). Enforces formal Markdown hyperlink formatting where every announcement title is linked directly to its source URL.
-* **Judge Evaluator Agent (`agent.py` & `spec.md`)**: Acts as an automated quality control gatekeeper. Evaluates drafts against rigorous zero-hallucination rules, word limits, and style guidelines. If a draft contains inferences, meta-commentary, or broken links, the Judge rejects the output and triggers an automated revision loop.
+* **Generator Agent (`agent.py`)**: Responsible for parsing RSS/HTML payloads, identifying key announcements within the current scanning window, and drafting clean Markdown summaries.
+* **QA Judge Evaluator (`agent.py`)**: Acts as an independent quality assurance evaluator. It reviews the draft brief against the raw scraped data to check for hallucinations, missing links, formatting errors, or broken URLs. If an issue is found, it feeds structured critique back to the generator for automated revision.
 * **Idempotency Harness (`main.py` & `checkpoint.json`)**: Tracks processed URLs by date. If a feed has already been processed on a given day, it is skipped unless a forced rescan is requested.
 * **Chunked Webhook Dispatcher (`main.py`)**: Splits the assembled Markdown brief by section (`---`) and dispatches sequential payloads to Google Chat via an incoming webhook, preventing message truncation from chat character limits.
 
@@ -38,9 +40,9 @@ While traditional "long-running agents" execute as continuous background process
 
 ## 2. Target Feeds (`targets.json`)
 
-The system tracks 15 curated research and engineering sources across four quadrants:
+The system tracks 14 curated research and engineering sources across four quadrants:
 1. **AI Labs & Research**: Google DeepMind, Google AI (The Keyword), Google Cloud AI, Anthropic, OpenAI, NVIDIA.
-2. **AI Engineering & Tools**: Cursor, Addy Osmani's Blog, Stanford HAI.
+2. **AI Engineering & Tools**: Addy Osmani's Blog, Stanford HAI.
 3. **Strategic AI Insights**: Sequoia Capital, Andreessen Horowitz (a16z AI), SemiAnalysis.
 4. **Enterprise & Industry Strategy**: McKinsey Insights, Bain & Company Insights, SpaceX.
 
